@@ -1,5 +1,4 @@
 import java.util.*
-import java.util.concurrent.atomic.AtomicLong
 
 fun explore(
     current: Position,
@@ -13,8 +12,8 @@ fun explore(
     }
     val lastMove = path.peek()
     val nextMoves = Move.canonicalMoves.filter { move ->
-        // We are not moving the same face twice. Also not moving opposite face one after the other.
-        // This last part is intuition
+        // We are not moving the same face twice.
+        // Also not moving opposite face one after the other. No justification, it just didn't feel... necessary. But I can't prove it
         lastMove.face != move.face && !lastMove.hasOppositeFace(move)
     }
 
@@ -44,24 +43,18 @@ fun explore(
 
 fun main() {
     var startPosition = Position()
-    val path = Stack<Move>()
+    val startPath = Stack<Move>()
 
-    listOf(Move.F0C, Move.F4C, Move.F0A, Move.F5C).forEach {
+    listOf(Move.F0C, Move.F4C).forEach {
         startPosition = startPosition.apply(it)
-        path.push(it)
+        startPath.push(it)
     }
 
-    val start = System.currentTimeMillis()
-    var numPos = AtomicLong(0)
-    explore(startPosition, path, 12) { currrentPosition, currentPath ->
-        numPos.addAndGet(1)
-        if (currrentPosition.numDifferencesSecondLevelPattern() == 0 && currrentPosition.numDifferencesThirdLevelPattern() in 1..12) {
+    explore(startPosition, startPath, maxDepth = 8) { currrentPosition, currentPath ->
+        // Leaves the triangles invariant, and less than 3 differences in the hexagons
+        if (currrentPosition.numDifferencesFirstLevelPattern() == 0 && currrentPosition.numDifferencesSecondLevelPattern() in 1..3) {
             println("We found an interesting move: " + currentPath.map { it.shortName }.joinToString(" "))
         }
     }
-    val end = System.currentTimeMillis()
-    println(end - start)
-    println(numPos)
-
-
+    
 }

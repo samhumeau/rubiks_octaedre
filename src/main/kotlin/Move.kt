@@ -1,11 +1,15 @@
 class Move(
     val shortName: String,
     val name: String,
-    val face: Int,
+    val face: Int, // See comment below for explanation on faces
     val permutation: IntArray
 ) {
     companion object {
         // Those are the canonical moves. Note that you could replace those to solve the actual Rubik's cube
+        // The Octaedre is composed of 2 pyramids glued one on top of the other
+        // The faces of the first pyramid are 0, 1, 2, 3
+        // The faces of the other pyramid are 4, 5, 6, 7, in such a way that
+        // face 0 is next to side 1, 4, and 3, and face 1 is next to side 0, 5 and 2.
         val F0C = Move("F0C", "Turn face 0 clockwise", 0, arrayOf(4, 6, 5, 1, 8, 7, 3, 2, 0, 35, 30, 34, 12, 27, 29, 15, 16, 17, 67, 19, 20, 21, 22, 23, 24, 25, 26, 44, 28, 43, 42, 31, 32, 33, 41, 40, 36, 37, 38, 39, 9, 11, 10, 14, 13, 45, 46, 47, 48, 49, 50, 51, 52, 18, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 53, 68, 69, 70, 71).toIntArray())
         val F0A = Move("F0A", "Turn face 0 anti-clockwise", 0, LowLevelHelpers.permut(F0C.permutation, F0C.permutation, null))
 

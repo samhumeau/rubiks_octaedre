@@ -1,16 +1,15 @@
-import java.util.*
+import java.util.concurrent.atomic.AtomicLong
 
 fun explore(
     current: Position,
-    path: Stack<Move>,
+    path: Path<Move>,
     maxDepth: Int,
-    evaluatePosition: (current: Position, path: Stack<Move>) -> Unit
+    evaluatePosition: (current: Position, path: Path<Move>) -> Unit
 ) {
     evaluatePosition(current, path)
-    if (path.size == maxDepth) {
-        return
-    }
-    val lastMove = path.peek()
+    if (path.size == maxDepth) return
+
+    val lastMove = path.current
     val nextMoves = Move.canonicalMoves.filter { move ->
         // We are not moving the same face twice.
         // Also not moving opposite face one after the other. No justification, it just didn't feel... necessary. But I can't prove it
@@ -20,41 +19,26 @@ fun explore(
     // In order to exploit as much as possible multi core, we want to make things parallel....
     // But not too much (because otherwise most of the compute is spent handling the parallelization)
     // Therefore for depth < 5, we spread accross thread, but above that we keep it single threaded.
-    if (path.size > 4) {
-        // The following code, which use efficient buffering, is 2x faster. But can't be parallelized.
-        val buffer = IntArray(current.symbolicPosition.size)
-        nextMoves.forEach { move ->
-            val newPosition = current.apply(move, buffer)
-            path.push(move)
-            explore(newPosition, path, maxDepth, evaluatePosition)
-            path.pop()
-        }
+    nextMoves.forEach(parallelIf = path.size < 5) { move ->
+        val newPosition = current.apply(move)
+        explore(newPosition, path.withNewElement(move), maxDepth, evaluatePosition)
     }
-    else {
-        nextMoves.parallelStream().forEach { move ->
-            val newPosition = current.apply(move)
-            val newPath = path.clone() as Stack<Move>
-            newPath.push(move)
-            explore(newPosition, newPath, maxDepth, evaluatePosition)
-        }
-    }
-
 }
 
 fun main() {
-    var startPosition = Position()
-    val startPath = Stack<Move>()
+    val startPosition = Position().apply(Move.F0C).apply(Move.F4C)
+    val startPath = Path(Move.F0C).withNewElement(Move.F4C)
 
-    listOf(Move.F0C, Move.F4C).forEach {
-        startPosition = startPosition.apply(it)
-        startPath.push(it)
-    }
-
-    explore(startPosition, startPath, maxDepth = 8) { currrentPosition, currentPath ->
+    val start = System.currentTimeMillis()
+    val numberPossibilitiesExplored = AtomicLong()
+    explore(startPosition, startPath, maxDepth = 10) { currrentPosition, currentPath ->
         // Leaves the triangles invariant, and less than 3 differences in the hexagons
-        if (currrentPosition.numDifferencesFirstLevelPattern() == 0 && currrentPosition.numDifferencesSecondLevelPattern() in 1..3) {
-            println("We found an interesting move: " + currentPath.map { it.shortName }.joinToString(" "))
+        numberPossibilitiesExplored.addAndGet(1)
+        if (currrentPosition.matchesFirstLevelPattern() && currrentPosition.numDifferencesSecondLevelPattern() in 1..3) {
+            println("We found an interesting move: " + currentPath.toList().joinToString(" ") { it.shortName })
         }
     }
-    
+    val end = System.currentTimeMillis()
+    print("Done. Explored $numberPossibilitiesExplored combinations in ${end - start}ms (${numberPossibilitiesExplored.get() * 1000 / (end - start)} per second)")
+
 }

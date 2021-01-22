@@ -12,9 +12,13 @@ class Position(
         val thirdLevelPattern = (0 until 72).toList().toIntArray()
     }
 
-    fun numDifferencesFirstLevelPattern() = LowLevelHelpers.differences(symbolicPosition, firstLevelPattern)
-    fun numDifferencesSecondLevelPattern() = LowLevelHelpers.differences(symbolicPosition, secondLevelPattern)
-    fun numDifferencesThirdLevelPattern() = LowLevelHelpers.differences(symbolicPosition, thirdLevelPattern)
+    fun matchesFirstLevelPattern() = LowLevelHelpers.matches(symbolicPosition, firstLevelPattern)
+    fun matchesSecondLevelPattern() = LowLevelHelpers.matches(symbolicPosition, secondLevelPattern)
+    fun matchesThirdLevelPattern() = LowLevelHelpers.matches(symbolicPosition, thirdLevelPattern)
+
+    fun numDifferencesFirstLevelPattern() = LowLevelHelpers.num_differences(symbolicPosition, firstLevelPattern)
+    fun numDifferencesSecondLevelPattern() = LowLevelHelpers.num_differences(symbolicPosition, secondLevelPattern)
+    fun numDifferencesThirdLevelPattern() = LowLevelHelpers.num_differences(symbolicPosition, thirdLevelPattern)
 
     fun apply(move: Move, optionalBuffer: IntArray? = null): Position {
         return Position(LowLevelHelpers.permut(symbolicPosition, move.permutation, optionalBuffer))
